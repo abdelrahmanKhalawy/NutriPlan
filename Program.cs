@@ -10,6 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<HealthProfileService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<UsdaSeederService>();
+builder.Services.AddScoped<MealPlanService>();
+builder.Services.AddScoped<ProgressService>();
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -52,5 +56,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<UsdaSeederService>();
+    await seeder.SeedFoods();
+}
 
 app.Run();

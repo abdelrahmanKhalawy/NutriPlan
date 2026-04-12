@@ -14,9 +14,14 @@ namespace MealPlanPlatform.API.Data
         public DbSet<Coach> Coaches { get; set; }
         public DbSet<UserCoach> UserCoaches { get; set; }
         public DbSet<Progress> Progresses { get; set; }
+        public DbSet<Food> Foods { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Subscription>()
+                .Property(s => s.Price)
+                .HasColumnType("decimal(18,2)");
+
             // User - HealthProfile (One to One)
             modelBuilder.Entity<UserHealthProfile>()
                 .HasOne(h => h.User)
