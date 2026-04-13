@@ -16,6 +16,7 @@ builder.Services.AddScoped<MealPlanService>();
 builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CoachService>();
+builder.Services.AddScoped<SubscriptionService>();
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>

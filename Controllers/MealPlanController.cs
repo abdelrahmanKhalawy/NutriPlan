@@ -11,10 +11,12 @@ namespace MealPlanPlatform.API.Controllers
     public class MealPlanController : ControllerBase
     {
         private readonly MealPlanService _mealPlanService;
+        private readonly SubscriptionService _subscriptionService;
 
-        public MealPlanController(MealPlanService mealPlanService)
+        public MealPlanController(MealPlanService mealPlanService, SubscriptionService subscriptionService)
         {
             _mealPlanService = mealPlanService;
+            _subscriptionService = subscriptionService;
         }
 
         // POST: api/mealplan/generate
@@ -22,6 +24,15 @@ namespace MealPlanPlatform.API.Controllers
         public async Task<IActionResult> Generate()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // تأكد إن اليوزر Free Plan
+            var canRegenerate = await _subscriptionService.CanAccess(userId, "Regenerate");
+            var subscription = await _subscriptionService.GetCurrentSubscription(userId);
+
+            // Pro و Premium مش بيقدروا يعملوا Regenerate بنفسهم
+            if (subscription?.PlanType is "Pro" or "Premium")
+                return BadRequest(new { message = "Your Coach manages your meal plan" });
+
             var plan = await _mealPlanService.GenerateMealPlan(userId);
             return Ok(new
             {
