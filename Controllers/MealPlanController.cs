@@ -25,11 +25,11 @@ namespace MealPlanPlatform.API.Controllers
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            // تأكد إن اليوزر Free Plan
+            // Ensure user has an active subscription before allowing meal plan generation
             var canRegenerate = await _subscriptionService.CanAccess(userId, "Regenerate");
             var subscription = await _subscriptionService.GetCurrentSubscription(userId);
 
-            // Pro و Premium مش بيقدروا يعملوا Regenerate بنفسهم
+            // Users with Pro or Premium subscriptions have their meal plans managed by their Coach, so we prevent them from generating their own plans.
             if (subscription?.PlanType is "Pro" or "Premium")
                 return BadRequest(new { message = "Your Coach manages your meal plan" });
 

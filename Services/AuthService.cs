@@ -23,14 +23,12 @@ namespace MealPlanPlatform.API.Services
         // =============== Register ===============
         public async Task<AuthResponseDto?> Register(RegisterDto dto)
         {
-            // Ensure the email is not already registered
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (existingUser != null)
-                return null; // email already exists
+                return null;
 
-            // Hash the password before saving
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             var user = new User
@@ -44,7 +42,6 @@ namespace MealPlanPlatform.API.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Generate JWT token for the newly registered user
             var token = GenerateToken(user);
 
             return new AuthResponseDto
@@ -63,13 +60,45 @@ namespace MealPlanPlatform.API.Services
                 .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (user == null)
-                return null; // the email is not registered
+                return null;
 
-            // Verify the password
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.Password);
 
             if (!isPasswordValid)
-                return null; // invalid password
+                return null;
+
+            var token = GenerateToken(user);
+
+            return new AuthResponseDto
+            {
+                Token = token,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
+            };
+        }
+
+        // =============== Google Login ===============
+        public async Task<AuthResponseDto?> GoogleLogin(string email, string name)
+        {
+            // لو الـ user موجود → login عادي
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            // لو مش موجود → register تلقائي بدون password
+            if (user == null)
+            {
+                user = new User
+                {
+                    Name = name,
+                    Email = email,
+                    Password = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()), // random password
+                    Role = "User"
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
 
             var token = GenerateToken(user);
 
